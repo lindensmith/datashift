@@ -46,21 +46,21 @@ in your Gemfile and run "bundle install" or use:
 
 To pull the tasks in, add this call to your Rakefile :
 
-```DataShift::load_tasks```
+	```DataShift::load_tasks```
 
 To keep the availability to only development mode use
 
-```DataShift::load_tasks if(Rails.env.development?)```
+	```DataShift::load_tasks if(Rails.env.development?)```
 
 Using the Thor command line applications is preferred over rake. To use the Thor command line applications, create a high level '.thor' file - e.g 'mysite.thor' - in your applications root directory 
 
 Edit the file and add the following to pull in the thor commands :
-```ruby
+	```ruby
     require 'thor'
     require 'datashift'
 
     DataShift::load_commands
-```
+	```
 To check the available tasks run
 
     bundle exec thor list datashift
