@@ -52,7 +52,7 @@ To keep the availability to only development mode use
 
 	DataShift::load_tasks if(Rails.env.development?)
 
-Using the Thor command line applications is preferred over rake. To use the Thor command line applications, create a high level '.thor' file - e.g 'mysite.thor' - in your applications root directory 
+Using the Thor command line applications is preferred over rake, and the rake commands are gradually being converted. To use the Thor command line applications, create a high level '.thor' file - e.g 'mysite.thor' - in your applications root directory 
 
 Edit the file and add the following to pull in the thor commands :
 ```ruby
@@ -112,12 +112,12 @@ OptionTypes, Properties and Images.
 
 ## Template Generation and Export
 
-Template generation tasks can be used to export a model's definition as column headings to CSV or .xls.
+Template generation tasks can be used to export a model's definition as column headings to .xls.
 These can be provided to developers or business users, as a template for data collection and then loading.
 
 Export tasks can be used to export of a model's definition and any existing data stored in the database.
 
-This data can be exported directly to CSV or Excel/OpenOffice spreadsheets.
+This data can be exported directly to Excel/OpenOffice spreadsheets.
 
 
 ## Example Spreadsheets
@@ -178,6 +178,18 @@ This data can be exported directly to CSV or Excel/OpenOffice spreadsheets.
 
     jruby -S rake datashift:spree:products input=C:\MyProducts.xls
 
+  For non-ruby, use the thor task for product upload:
+
+	bundle exec thor datashift:spree:products -i db/datashift/SpreeProducts.csv
+
+- *Spree Product and Image Loading
+
+	The csv or xls file should have a column 'Images'.  In each row, the image column should have the path to the image
+	relative to the directory from which the product and image load will be run (not the location of the file).  If your
+	Spree store is a directory "mystore", then you can run datashift from that directory, and use image paths relative to "mystore".
+	To load the products and images together:
+	
+	bundle exec thor datashift:spree:products -i db/datashift/SpreeProductsWithImages.csv
 
 - *Seamless Spree Image loading can be achieved by ensuring SKU or class Name features in Image filename.
 
