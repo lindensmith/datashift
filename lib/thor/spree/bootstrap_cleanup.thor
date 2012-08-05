@@ -30,7 +30,7 @@ module Datashift
       
       cleanup =  %w{ Image OptionType OptionValue 
                     Product Property ProductGroup ProductProperty ProductOptionType 
-                    Variant Taxonomy Taxon
+                    Variant Taxonomy Taxon Digital
       }
 
       cleanup.each do |k|
@@ -51,6 +51,13 @@ module Datashift
       end
       
       FileUtils::rm_rf('MissingRecords') if(File.exists?('MissingRecords') )
+
+	  digital_bank='private/digitals'
+	  if(File.exists?(digital_bank) )
+        puts "Removing old Product assets from '#{digital_bank}'"
+        FileUtils::rm_rf(digital_bank) 
+      end
+	  
       
     end
   

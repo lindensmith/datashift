@@ -42,6 +42,7 @@ module DataShift
       def perform_load( file_name, options = {} )
          # In >= 1.1.0 Image moved to master Variant from Product so no association called Images on Product anymore
         options[:force_inclusion] = options[:force_inclusion] ? ['images'] : [*options[:force_inclusion]] << 'images'
+        options[:force_inclusion] = options[:force_inclusion] ? ['digitals'] : [*options[:force_inclusion]] << 'digitals'
     
         super(file_name, options)
       end
@@ -71,6 +72,14 @@ module DataShift
         elsif(@current_method_detail.operator?('images') && current_value)
 
           add_images
+        
+        elsif(@current_method_detail.operator?('digitals') && current_value)
+        
+          add_digitals
+        
+        elsif(@current_method_detail.operator?('digital_samples') && current_value)
+        
+          add_digital_samples
           
         elsif(current_value && (@current_method_detail.operator?('count_on_hand') || @current_method_detail.operator?('on_hand')) )
 
@@ -236,6 +245,7 @@ module DataShift
       #
       def add_images
         # TODO smart column ordering to ensure always valid by time we get to associations
+        puts "adding images\n"
         save_if_new
 
         images = get_each_assoc#current_value.split(LoaderBase::multi_assoc_delim)
@@ -253,6 +263,48 @@ module DataShift
       
       end
 
+      def add_digitals
+        puts "adding digitals\n"
+        save_if_new
+
+        digitals = get_each_assoc#current_value.split(LoaderBase::multi_assoc_delim)
+
+        digitals.each do |digital|
+          puts "Add Digital #{digital}"
+          dig_path, alt_text = digital.split(LoaderBase::name_value_delim)
+
+          # moved from Prod to Variant in spree 1.x.x
+          attachment  = (SpreeHelper::version.to_f > 1) ? @load_object.master : @load_object
+
+         # need to define "create digital" and uncomment this
+         # digital = create_digital(@@image_klass, img_path, attachment, :alt => alt_text)
+          logger.debug("Product assigned a digital file : #{digital.inspect}")
+        end
+        
+      end
+      
+      def add_digital_samples
+        puts "adding digital samples"
+        
+        save_if_new
+
+        digital_samples = get_each_assoc#current_value.split(LoaderBase::multi_assoc_delim)
+
+        digital_samples.each do |digital|
+          puts "Add Digital Sample #{digital}"
+          digsamp_path, alt_text = digital.split(LoaderBase::name_value_delim)
+
+          # moved from Prod to Variant in spree 1.x.x
+          attachment  = (SpreeHelper::version.to_f > 1) ? @load_object.master : @load_object
+
+         # need to define "create digital" and uncomment this
+         # digital = create_digital(@@image_klass, img_path, attachment, :alt => alt_text)
+          logger.debug("Product assigned a digital sample file : #{digital.inspect}")
+        end
+        
+        
+        
+      end
       
       # Special case for ProductProperties since it can have additional value applied.
       # A list of Properties with a optional Value - supplied in form :

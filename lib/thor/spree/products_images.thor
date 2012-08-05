@@ -56,11 +56,12 @@ module Datashift
       options = {:mandatory => ['sku', 'name', 'price']}
     
       # In >= 1.1.0 Image moved to master Variant from Product
-      options[:force_inclusion] = ['images'] if(DataShift::SpreeHelper::version.to_f > 1 )
+      options[:force_inclusion] = ['images','digitals'] if(DataShift::SpreeHelper::version.to_f > 1 )
       
       loader.perform_load(input, options)
     end
   
+	####################################################
 
     desc "attach_images", "Populate Products with images from Excel/CSV\nProvide column SKU or Name\nProvide column 'attachment' containing full path to image"
     # :dummy => dummy run without actual saving to DB
@@ -82,13 +83,38 @@ module Datashift
       loader.perform_load( options[:input], options )
     end
   
+	####################################################
+
+    desc "attach_digitals", "Populate Products with digitals from Excel/CSV\nProvide column SKU or Name\nProvide column 'attachment' containing full path to digital"
+    # :dummy => dummy run without actual saving to DB
+    method_option :input, :aliases => '-i', :required => true, :desc => "The 2 column import file (.xls or .csv)"
     
+    def attach_digitals()
+
+      require File.expand_path('config/environment.rb')
+      
+      require 'digital_loader'
+      
+      digital_klazz = DataShift::SpreeHelper::get_spree_class('Digital' )
+      
+      # force inclusion means add to operator list even if not present
+      options = { :force_inclusion => ['sku', 'attachment'] } if(SpreeHelper::version.to_f > 1 )
+    
+      loader = DataShift::SpreeHelper::DigitalLoader.new(nil, options)
+    
+      loader.perform_load( options[:input], options )
+    end
+ 
+ 
+
+  	####################################################
     #
     # => thor datashift:spree:images input=vendor/extensions/site/fixtures/images
     # => rake datashift:spree:images input=C:\images\photos large dummy=true
     #
     # => rake datashift:spree:images input=C:\images\taxon_icons skip_if_no_assoc=true klass=Taxon
-    #
+    #####################################################
+
     desc "images", "Populate the DB with images from a directory\nwhere image names contain somewhere the Product Sku/Name"
     
     # :dummy => dummy run without actual saving to DB
@@ -112,7 +138,6 @@ module Datashift
     def images()
 
       require File.expand_path('config/environment.rb')
-      
       require 'spree/image_loader'
             
       @verbose = options[:verbose]
@@ -238,6 +263,160 @@ module Datashift
    
     end
    
+
+#*********************************
+
+    desc "digitals", "Populate the DB with digitals from a directory\nwhere digital names contain somewhere the Product Sku/Name"
+    
+    # :dummy => dummy run without actual saving to DB
+    method_option :input, :aliases => '-i', :required => true, :desc => "The input path containing digitals (.mobi, .epub, .pdf, .jpg, .jpeg, .png, .gif)"
+    
+    method_option :recursive, :aliases => '-r', :type => :boolean, :desc => "Scan sub directories of input for digitals"
+     
+    method_option :sku, :aliases => '-s', :desc => "Lookup Product based on digital name starting with sku"
+    method_option :sku_prefix, :aliases => '-p', :desc => "Prefix to add to each SKU in import file before attempting lookup"
+    method_option :dummy, :aliases => '-d', :type => :boolean, :desc => "Dummy run, do not actually save Image or Product"
+    
+    method_option :process_when_no_assoc, :aliases => '-f', :type => :boolean, :desc => "Process digital even if no Product found - force loading"
+    method_option :skip_when_assoc, :aliases => '-x', :type => :boolean, :desc => "DO not process digital if Product already has digitals"
+    
+    method_option :verbose, :aliases => '-v', :type => :boolean, :desc => "Verbose logging"
+    method_option :config, :aliases => '-c',  :type => :string, :desc => "Configuration file for Digital Loader in YAML"
+    method_option :split_file_name_on,  :type => :string, :desc => "delimiter to progressivley split filename for Prod lookup", :default => '_'
+    method_option :case_sensitive, :type => :boolean, :desc => "Use case sensitive where clause to find Product"
+    method_option :use_like, :type => :boolean, :desc => "Use sku/name LIKE 'string%' instead of sku/name = 'string' in where clauses to find Product"
+  
+    def digitals()
+
+      require File.expand_path('config/environment.rb')
+      require 'spree/digital_loader'
+            
+      @verbose = options[:verbose]
+       
+      puts "Using Product Name for lookup" unless(options[:sku])
+      puts "Using SKU for lookup" if(options[:sku])
+       
+      digital_klazz = DataShift::SpreeHelper::get_spree_class('Digital' )
+       
+      attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Product' )
+      attachment_field  = 'name'
+
+      if(options[:sku] || SpreeHelper::version.to_f > 1)
+        attachment_klazz =  DataShift::SpreeHelper::get_spree_class('Variant' ) 
+        attachment_field = 'sku'
+		puts "using attachment_field sku"
+      end
+
+      digital_loader = DataShift::SpreeHelper::DigitalLoader.new(nil, options)
+ 
+      if(options[:config])
+        raise "Bad Config - Cannot find specified file #{options[:config]}" unless File.exists?(options[:config])
+        
+        digital_loader.configure_from( options[:config] )
+      end
+
+      loader_config = digital_loader.options
+ 
+      puts "CONFIG: #{loader_config.inspect}"
+      puts "OPTIONS #{options.inspect}"
+      
+      @digital_path = options[:input]
+      
+      unless(File.exists?(@digital_path))
+        puts "ERROR: Supplied Path [#{@digital_path}] not accessible"
+        exit(-1)
+      end
+      
+      logger.info "Loading Spree digitals from #{@digital_path}"
+
+      missing_records = []
+         
+      # try splitting up filename in various ways looking for the SKU
+      split_on = loader_config['split_file_name_on'] || options[:split_file_name_on]
+       
+      puts "Will scan digital names splitting on delimiter : #{split_on}"
+      
+      digital_cache = DataShift::DigitalLoading::get_files(@digital_path, options)
+      
+      digital_cache.each do |digital_name|
+
+        digital_base_name = File.basename(digital_name)
+        
+        base_name = File.basename(digital_name, '.*')
+        base_name.strip!
+                       
+        logger.info "Processing digital file #{base_name} : #{File.exists?(digital_name)}"
+           
+        record = nil
+                   
+        record = digital_loader.get_record_by(attachment_klazz, attachment_field, base_name)
+          
+        # try seperate portions of the filename, front -> back
+        base_name.split(split_on).each do |x| 
+          record = digital_loader.get_record_by(attachment_klazz, attachment_field, x)
+          break if record
+        end unless(record)
+            
+        # this time try sequentially scanning
+        base_name.split(split_on).inject("") do |str, x| 
+          record = digital_loader.get_record_by(attachment_klazz, attachment_field, "#{str}#{x}")
+          break if record
+          x
+        end unless(record)
+          
+        # for digitals we want to attach to the variant, not the master.  uncomment this to attach to master
+        # record = record.product if(record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
+
+
+        puts "record is #{record.id}"
+        if(record)
+          logger.info "Found record for attachment : #{record.inspect}"
+    
+          if(options[:skip_when_assoc])
+            
+            paper_clip_name = digital_base_name.gsub(Paperclip::Attachment::default_options[:restricted_characters], '_')
+            
+            exists = record.digitals.detect {|i| puts "Check #{paper_clip_name} matches #{i.attachment_file_name}"; i.attachment_file_name == paper_clip_name }
+            if(exists)
+              rid = record.respond_to?(:name) ? record.name : record.id
+              puts "Skipping Digital #{digital_name} already loaded for #{rid}"
+              logger.info "Skipping - Digital #{digital_name} already loaded for #{attachment_klazz}"
+              next 
+            end
+          end
+        else
+          missing_records << digital_name
+        end
+          
+        next if(options[:dummy]) # Don't actually create/upload to DB if we are doing dummy run
+
+        # Check if Digital must have an associated record
+        if(record || (record.nil? && options[:process_when_no_assoc]))
+          digital_loader.reset()
+          
+          logger.info("Adding Digital #{digital_name} to Product #{record.name}")
+          digital_loader.create_digital(digital_klazz, digital_name, record)
+          puts "Added Digital #{File.basename(digital_name)} to Product #{record.sku} : #{record.name}, ID:#{record.id}" if(@verbose)
+        end
+      end
+
+      unless missing_records.empty?
+        FileUtils.mkdir_p('MissingRecords') unless File.directory?('MissingRecords')
+        
+        puts "WARNING : #{missing_records.size} of #{digital_cache.size} digitals could not be attached to a Product"
+        puts 'Copying all digitals with MISSING Records to ./MissingRecords >>'
+        missing_records.each do |i|
+          puts "Copy #{i} to MissingRecords folder"
+          FileUtils.cp( i, 'MissingRecords')  unless(options[:dummy] == 'true')
+        end
+      else
+        puts "All digitals (#{digital_cache.size}) were succesfully attached to a Product"
+      end
+
+      puts "Dummy Run Complete- if happy run without -d" if(options[:dummy])
+   
+    end
+
   end
 
 end

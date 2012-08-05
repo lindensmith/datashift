@@ -39,7 +39,7 @@ module DataShift
         @loaded_objects =  []
 
         @parsed_file.each do |row|
-          
+          puts "processing row #{row}\n"
           # First assign any default values for columns not included in parsed_file
           process_missing_columns_with_defaults
 

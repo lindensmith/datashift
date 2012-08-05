@@ -4,23 +4,23 @@
 # License::   MIT. Free, Open Source.
 #
 require 'loader_base'
-require 'paperclip/image_loader'
+require 'paperclip/digital_loader'
 
 
 module DataShift
 
 
-  module DataShift::SpreeImageLoading
+  module DataShift::SpreeDigitalLoading
  
     include DataShift::Logging
-    include DataShift::ImageLoading
+    include DataShift::DigitalLoading
      
-    # Note the Spree Image model sets default storage path to
+    # Note the Spree Digital model sets default storage path to
     # => :path => ":rails_root/public/assets/products/:id/:style/:basename.:extension"
 
-    def create_image(klass, attachment_path, viewable_record = nil, options = {})
+    def create_digital(klass, attachment_path, viewable_record = nil, options = {})
         
-      viewable =  (SpreeHelper::version.to_f > 1 && viewable_record.is_a?(Spree::Product) ) ? viewable_record.master : viewable_record
+       viewable =  (SpreeHelper::version.to_f > 1 && viewable_record.is_a?(Spree::Product) ) ? viewable_record.master : viewable_record
       
       super(klass, attachment_path, viewable, options)
     end
@@ -30,27 +30,29 @@ module DataShift
   module SpreeHelper
      
     # TODO - extract this out of SpreeHelper to create  a general paperclip loader
-    class ImageLoader < LoaderBase
+    class DigitalLoader < LoaderBase
 
-      include DataShift::SpreeImageLoading
+      include DataShift::SpreeDigitalLoading
       include DataShift::CsvLoading
       include DataShift::ExcelLoading
       
-      def initialize(image = nil, options = {})
+      def initialize(digital = nil, options = {})
         puts "SpreeHelper::initialize starting initialze()\n"
-        opts = options.merge(:load => false)  # Don't need operators and no table Spree::Image
+        opts = options.merge(:load => false)  # Don't need operators and no table Spree::Digital
 
-        super( SpreeHelper::get_spree_class('Image'), image, opts )
+        super( SpreeHelper::get_spree_class('Digital'), digital, opts )
         
+        puts "spreehelper version #{SpreeHelper::version.to_f}"
         if(SpreeHelper::version.to_f > 1.0 )
           @attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Variant' )
+          puts "attaching to variant"
         else
           @attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Product' )
         end
         
         puts "Attachment Class is #{@attachment_klazz}" if(@verbose)
           
-        raise "Failed to create Image for loading" unless @load_object
+        raise "Failed to create Digital for loading" unless @load_object
       end
       
       def process()
@@ -58,14 +60,14 @@ module DataShift
         puts "current method detail operator: #{@current_method_detail.operator}"
         
         if(current_value && @current_method_detail.operator?('attachment') )
-          # assign the image file data as an attachment
+          # assign the digital file data as an attachment
           @load_object.attachment = get_file(current_value)
           
           puts "Attachment created : #{@load_object.inspect}"
               
         elsif(current_value && @current_method_detail.operator )    
           
-          # find the db record to assign our Image to
+          # find the db record to assign our Digital to
           add_record( get_record_by(@attachment_klazz, @current_method_detail.operator, current_value) )
                 
         end
@@ -73,7 +75,7 @@ module DataShift
       end
     
       def add_record(record)
-        puts "SpreeHelper::add_record (image)"
+        puts "SpreeHelper::add_record (digital)"
         
         if(record)
           if(SpreeHelper::version.to_f > 1 )
@@ -82,7 +84,7 @@ module DataShift
             @load_object.viewable = record.product   # SKU stored on Variant but we want it's master Product
           end
           @load_object.save
-          puts "Image viewable set : #{record.inspect}"
+          puts "Digital viewable set : #{record.inspect}"
           
         else
           puts "WARNING - Cannot set viewable - No matching record supplied"
@@ -93,4 +95,4 @@ module DataShift
      
 
   end
-end 
+end
