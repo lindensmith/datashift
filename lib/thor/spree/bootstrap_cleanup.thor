@@ -57,6 +57,12 @@ module Datashift
         puts "Removing old Product assets from '#{digital_bank}'"
         FileUtils::rm_rf(digital_bank) 
       end
+
+	  digital_sample_bank='public/digital_samples'
+	  if(File.exists?(digital_sample_bank) )
+        puts "Removing old Product assets from '#{digital_sample_bank}'"
+        FileUtils::rm_rf(digital_sample_bank) 
+      end
 	  
       
     end

@@ -212,8 +212,12 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
   Needs further development and testing, but it will load digital products (associated with spree\_digital)
 
   bundle exec thor datashift:spree:digitals -i db/digitaldirectory/
+  
+  can also take a different model name using the -m option, example: 
 
+  bundle exec thor datashift:spree:digitals -i db/digitaldirectory/ -m DigitalSample
 
+  The default model for digitals is 'Digital'
 
 
 

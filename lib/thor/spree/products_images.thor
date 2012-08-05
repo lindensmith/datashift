@@ -285,6 +285,7 @@ module Datashift
     method_option :split_file_name_on,  :type => :string, :desc => "delimiter to progressivley split filename for Prod lookup", :default => '_'
     method_option :case_sensitive, :type => :boolean, :desc => "Use case sensitive where clause to find Product"
     method_option :use_like, :type => :boolean, :desc => "Use sku/name LIKE 'string%' instead of sku/name = 'string' in where clauses to find Product"
+	method_option :model_name, :aliases => '-m', :type => :string, :desc => "Model name to load to. Default is 'Digital'"
   
     def digitals()
 
@@ -292,11 +293,17 @@ module Datashift
       require 'spree/digital_loader'
             
       @verbose = options[:verbose]
+
+	  if (options[:model_name])
+		model_name=options[:model_name]
+	  else
+		model_name='Digital'
+	  end
        
       puts "Using Product Name for lookup" unless(options[:sku])
       puts "Using SKU for lookup" if(options[:sku])
        
-      digital_klazz = DataShift::SpreeHelper::get_spree_class('Digital' )
+      digital_klazz = DataShift::SpreeHelper::get_spree_class(model_name)
        
       attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Product' )
       attachment_field  = 'name'
@@ -319,6 +326,7 @@ module Datashift
  
       puts "CONFIG: #{loader_config.inspect}"
       puts "OPTIONS #{options.inspect}"
+	  puts "MODEL NAME: #{model_name}"
       
       @digital_path = options[:input]
       
@@ -327,7 +335,7 @@ module Datashift
         exit(-1)
       end
       
-      logger.info "Loading Spree digitals from #{@digital_path}"
+      logger.info "Loading Spree #{model_name}s from #{@digital_path}"
 
       missing_records = []
          
@@ -340,13 +348,12 @@ module Datashift
 	  puts "#{digital_cache}"
       
       digital_cache.each do |digital_name|
-		puts "processing #{digital_name}"
         digital_base_name = File.basename(digital_name)
         
         base_name = File.basename(digital_name, '.*')
         base_name.strip!
                        
-        logger.info "Processing digital file #{base_name} : #{File.exists?(digital_name)}"
+        logger.info "Processing #{model_name} file #{base_name} : #{File.exists?(digital_name)}"
            
         record = nil
                    
@@ -378,8 +385,8 @@ module Datashift
             exists = record.digitals.detect {|i| puts "Check #{paper_clip_name} matches #{i.attachment_file_name}"; i.attachment_file_name == paper_clip_name }
             if(exists)
               rid = record.respond_to?(:name) ? record.name : record.id
-              puts "Skipping Digital #{digital_name} already loaded for #{rid}"
-              logger.info "Skipping - Digital #{digital_name} already loaded for #{attachment_klazz}"
+              puts "Skipping #{model_name} #{digital_name} already loaded for #{rid}"
+              logger.info "Skipping - #{model_name} #{digital_name} already loaded for #{attachment_klazz}"
               next 
             end
           end
@@ -393,9 +400,9 @@ module Datashift
         if(record || (record.nil? && options[:process_when_no_assoc]))
           digital_loader.reset()
           
-          logger.info("Adding Digital #{digital_name} to Product #{record.name}")
+          logger.info("Adding #{model_name} #{digital_name} to Product #{record.name}")
           digital_loader.create_digital(digital_klazz, digital_name, record)
-          puts "Added Digital #{File.basename(digital_name)} to Product #{record.sku} : #{record.name}, ID:#{record.id}" if(@verbose)
+          puts "Added #{model_name} #{File.basename(digital_name)} to Product #{record.sku} : #{record.name}, ID:#{record.id}" if(@verbose)
         end
       end
 
@@ -409,7 +416,7 @@ module Datashift
           FileUtils.cp( i, 'MissingRecords')  unless(options[:dummy] == 'true')
         end
       else
-        puts "All digitals (#{digital_cache.size}) were succesfully attached to a Product"
+        puts "All #{model_name}s (#{digital_cache.size}) were succesfully attached to a Product"
       end
 
       puts "Dummy Run Complete- if happy run without -d" if(options[:dummy])
