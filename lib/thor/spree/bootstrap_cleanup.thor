@@ -30,7 +30,7 @@ module Datashift
       
       cleanup =  %w{ Image OptionType OptionValue 
                     Product Property ProductGroup ProductProperty ProductOptionType 
-                    Variant Taxonomy Taxon Digital
+                    Variant Taxonomy Taxon Digital DigitalSample
       }
 
       cleanup.each do |k|
