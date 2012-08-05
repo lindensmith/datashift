@@ -7,7 +7,7 @@ module DataShift
     
     #keeping this around so we can do multiple files per variant
     def self.get_files(path, options = {})
-      glob = (options['recursive'] || options[:recursive])  ? "**/*.{mobi,epub,pdf,jpg,jpeg,png,gif}" : "*.{mobi,epub,pdf,jpeg,png,gif}"
+      glob = (options['recursive'] || options[:recursive])  ? "**/*.{mobi,epub,pdf,jpg,jpeg,png,gif}" : "*.{mobi,epub,pdf,jpg,jpeg,png,gif}"
       
       Dir.glob("#{path}/#{glob}")
     end

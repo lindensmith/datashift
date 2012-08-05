@@ -178,7 +178,7 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
 
     jruby -S rake datashift:spree:products input=C:\MyProducts.xls
 
-  For non-ruby, use the thor task for product upload:
+  For non-jruby, use the thor task for product upload:
 
 	bundle exec thor datashift:spree:products -i db/datashift/SpreeProducts.csv
 
@@ -207,6 +207,15 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
   rake  datashift:spree:images input=C:\images\product_images skip_if_no_assoc=true
 
   rake  datashift:spree:images input=C:\images\taxon_icons skip_if_no_assoc=true klass=Taxon
+
+- *Spree Digital Product Loading
+  Needs further development and testing, but it will load digital products (associated with spree\_digital)
+
+  bundle exec thor datashift:spree:digitals -i db/digitaldirectory/
+
+
+
+
 
 ## Import to Active Record
 

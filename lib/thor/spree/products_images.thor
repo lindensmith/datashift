@@ -337,9 +337,10 @@ module Datashift
       puts "Will scan digital names splitting on delimiter : #{split_on}"
       
       digital_cache = DataShift::DigitalLoading::get_files(@digital_path, options)
+	  puts "#{digital_cache}"
       
       digital_cache.each do |digital_name|
-
+		puts "processing #{digital_name}"
         digital_base_name = File.basename(digital_name)
         
         base_name = File.basename(digital_name, '.*')
@@ -367,8 +368,6 @@ module Datashift
         # for digitals we want to attach to the variant, not the master.  uncomment this to attach to master
         # record = record.product if(record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
 
-
-        puts "record is #{record.id}"
         if(record)
           logger.info "Found record for attachment : #{record.inspect}"
     
