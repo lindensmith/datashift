@@ -39,20 +39,18 @@ module DataShift
       def initialize(digital = nil, options = {})
         puts "SpreeHelper::initialize starting initialze()\n"
         opts = options.merge(:load => false)  # Don't need operators and no table Spree::Digital
-
-        super( SpreeHelper::get_spree_class('Digital'), digital, opts )
+        model_name=options(:model_name)
+        super( SpreeHelper::get_spree_class(model_name), digital, opts )
         
-        puts "spreehelper version #{SpreeHelper::version.to_f}"
         if(SpreeHelper::version.to_f > 1.0 )
           @attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Variant' )
-          puts "attaching to variant"
         else
           @attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Product' )
         end
         
         puts "Attachment Class is #{@attachment_klazz}" if(@verbose)
           
-        raise "Failed to create Digital for loading" unless @load_object
+        raise "Failed to create #{model_name} for loading" unless @load_object
       end
       
       def process()
@@ -75,7 +73,6 @@ module DataShift
       end
     
       def add_record(record)
-        puts "SpreeHelper::add_record (digital)"
         
         if(record)
           if(SpreeHelper::version.to_f > 1 )

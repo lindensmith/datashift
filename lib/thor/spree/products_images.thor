@@ -311,7 +311,6 @@ module Datashift
       if(options[:sku] || SpreeHelper::version.to_f > 1)
         attachment_klazz =  DataShift::SpreeHelper::get_spree_class('Variant' ) 
         attachment_field = 'sku'
-		puts "using attachment_field sku"
       end
 
       digital_loader = DataShift::SpreeHelper::DigitalLoader.new(nil, options)
@@ -342,10 +341,9 @@ module Datashift
       # try splitting up filename in various ways looking for the SKU
       split_on = loader_config['split_file_name_on'] || options[:split_file_name_on]
        
-      puts "Will scan digital names splitting on delimiter : #{split_on}"
+      puts "Will scan #{model_names} names splitting on delimiter : #{split_on}"
       
       digital_cache = DataShift::DigitalLoading::get_files(@digital_path, options)
-	  puts "#{digital_cache}"
       
       digital_cache.each do |digital_name|
         digital_base_name = File.basename(digital_name)
@@ -373,7 +371,9 @@ module Datashift
         end unless(record)
           
         # for digitals we want to attach to the variant, not the master.  uncomment this to attach to master
-        # record = record.product if(record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
+		# for images we want to attach to the master
+        record = record.product if((model_name=='Image') && record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
+		
 
         if(record)
           logger.info "Found record for attachment : #{record.inspect}"

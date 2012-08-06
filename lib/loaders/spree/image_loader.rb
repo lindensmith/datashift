@@ -73,7 +73,6 @@ module DataShift
       end
     
       def add_record(record)
-        puts "SpreeHelper::add_record (image)"
         
         if(record)
           if(SpreeHelper::version.to_f > 1 )

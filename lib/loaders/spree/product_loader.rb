@@ -77,9 +77,9 @@ module DataShift
         
           add_digitals
         
-        elsif(@current_method_detail.operator?('digital_samples') && current_value)
-        
-          add_digital_samples
+ ##       elsif(@current_method_detail.operator?('digital_samples') && current_value)
+ ##        
+ ##          add_digital_samples
           
         elsif(current_value && (@current_method_detail.operator?('count_on_hand') || @current_method_detail.operator?('on_hand')) )
 
@@ -270,7 +270,7 @@ module DataShift
         digitals = get_each_assoc#current_value.split(LoaderBase::multi_assoc_delim)
 
         digitals.each do |digital|
-          puts "Add Digital #{digital}"
+          
           dig_path, alt_text = digital.split(LoaderBase::name_value_delim)
 
           # moved from Prod to Variant in spree 1.x.x

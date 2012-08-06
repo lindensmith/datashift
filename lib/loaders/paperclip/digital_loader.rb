@@ -16,7 +16,7 @@ module DataShift
       
       unless File.exists?(attachment_path) && File.readable?(attachment_path)
         logger.error("Cannot process Digital from #{Dir.pwd}: Invalid Path #{attachment_path}")
-        raise "Cannot process Digital : Invalid Path #{attachment_path}"
+        raise "Cannot process loader : Invalid Path #{attachment_path}"
       end
      
       file = begin
@@ -30,7 +30,7 @@ module DataShift
     end
     
       def create_digital(klass, attachment_path, viewable_record = nil, options = {})
-        puts "create_digital #{viewable_record.id}"
+        
         has_attached_file = options[:has_attached_file_name] || :attachment
 
          alt = if(options[:alt])
@@ -41,7 +41,6 @@ module DataShift
 
          position = (viewable_record and viewable_record.respond_to?(:digitals)) ? viewable_record.digitals.length : 0
 
-
         file = get_file(attachment_path)
         
         begin
@@ -51,8 +50,8 @@ module DataShift
             :without_protection => true
           )  
 
-          #digital.attachment.reprocess!  not sure this is required anymore
-          digital.variant_id = viewable_record.id
+          # Attach to product ID for images, to variant for other digitals
+          digital.variant_id = viewable_record.id unless (options(:model_name)=='Image')
           puts digital.save ? "Success: Created Digital: #{digital.id} : #{digital.attachment_file_name} : #{digital.variant_id}" : "ERROR : Problem saving to DB Digital: #{digital.inspect}"
         rescue => e
           puts "PaperClip error - Problem creating a Digital from : #{attachment_path}"
