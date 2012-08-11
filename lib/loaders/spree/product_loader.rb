@@ -42,7 +42,6 @@ module DataShift
       def perform_load( file_name, options = {} )
          # In >= 1.1.0 Image moved to master Variant from Product so no association called Images on Product anymore
         options[:force_inclusion] = options[:force_inclusion] ? ['images'] : [*options[:force_inclusion]] << 'images'
-        options[:force_inclusion] = options[:force_inclusion] ? ['digitals'] : [*options[:force_inclusion]] << 'digitals'
     
         super(file_name, options)
       end

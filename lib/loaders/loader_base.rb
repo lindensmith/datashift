@@ -379,7 +379,6 @@ module DataShift
     # Value string which may contain multiple values for a collection association.
     #
     def process()  
-      
       logger.info("Current value to assign : #{@current_value}") #if @options['verboose_logging']
       
       if(@current_method_detail.operator_for(:has_many))
