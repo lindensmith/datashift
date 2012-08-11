@@ -209,17 +209,13 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
   rake  datashift:spree:images input=C:\images\taxon_icons skip_if_no_assoc=true klass=Taxon
 
 - *Spree Digital Product Loading
-  Needs further development and testing, but it will load digital products (associated with spree\_digital)
+  Needs further development and testing, but it will load digital products (associated with spree\_digital) using the image loader and model option (-m)
+ 
+  to load digitals and digital samples use  
 
-  bundle exec thor datashift:spree:digitals -i db/digitaldirectory/
+  bundle exec thor datashift:spree:images -i db/digitaldirectory/ -m Digital
   
-  can also take a different model name using the -m option, example: 
-
-  bundle exec thor datashift:spree:digitals -i db/digitaldirectory/ -m DigitalSample
-
-  The default model for digitals is 'Digital'
-
-
+  where 'Digital' is the name of the model. 
 
 ## Import to Active Record
 

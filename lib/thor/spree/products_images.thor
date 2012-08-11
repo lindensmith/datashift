@@ -85,25 +85,6 @@ module Datashift
   
 	####################################################
 
-    desc "attach_digitals", "Populate Products with digitals from Excel/CSV\nProvide column SKU or Name\nProvide column 'attachment' containing full path to digital"
-    # :dummy => dummy run without actual saving to DB
-    method_option :input, :aliases => '-i', :required => true, :desc => "The 2 column import file (.xls or .csv)"
-    
-    def attach_digitals()
-
-      require File.expand_path('config/environment.rb')
-      
-      require 'digital_loader'
-      
-      digital_klazz = DataShift::SpreeHelper::get_spree_class('Digital' )
-      
-      # force inclusion means add to operator list even if not present
-      options = { :force_inclusion => ['sku', 'attachment'] } if(SpreeHelper::version.to_f > 1 )
-    
-      loader = DataShift::SpreeHelper::DigitalLoader.new(nil, options)
-    
-      loader.perform_load( options[:input], options )
-    end
  
  
 
