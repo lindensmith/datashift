@@ -134,6 +134,7 @@ module Datashift
     method_option :split_file_name_on,  :type => :string, :desc => "delimiter to progressivley split filename for Prod lookup", :default => '_'
     method_option :case_sensitive, :type => :boolean, :desc => "Use case sensitive where clause to find Product"
     method_option :use_like, :type => :boolean, :desc => "Use sku/name LIKE 'string%' instead of sku/name = 'string' in where clauses to find Product"
+	method_option :model_name, :aliases => '-m', :type => :string, :desc => "Model name to load to. Default is 'Digital'"
   
     def images()
 
@@ -141,11 +142,17 @@ module Datashift
       require 'spree/image_loader'
             
       @verbose = options[:verbose]
+
+	  if (options[:model_name])
+		model_name=options[:model_name]
+	  else
+		model_name='Image'
+	  end
        
       puts "Using Product Name for lookup" unless(options[:sku])
       puts "Using SKU for lookup" if(options[:sku])
        
-      image_klazz = DataShift::SpreeHelper::get_spree_class('Image' )
+      image_klazz = DataShift::SpreeHelper::get_spree_class(model_name)
        
       attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Product' )
       attachment_field  = 'name'
@@ -167,22 +174,23 @@ module Datashift
  
       puts "CONFIG: #{loader_config.inspect}"
       puts "OPTIONS #{options.inspect}"
+	  puts "MODEL NAME: #{model_name}"
       
       @image_path = options[:input]
       
       unless(File.exists?(@image_path))
-        puts "ERROR: Supplied Path [#{@image_path}] not accesible"
+        puts "ERROR: Supplied Path [#{@image_path}] not accessible"
         exit(-1)
       end
       
-      logger.info "Loading Spree images from #{@image_path}"
+      logger.info "Loading Spree #{model_name}s from #{@image_path}"
 
       missing_records = []
          
       # try splitting up filename in various ways looking for the SKU
       split_on = loader_config['split_file_name_on'] || options[:split_file_name_on]
        
-      puts "Will scan image names splitting on delimiter : #{split_on}"
+      puts "Will scan #{model_name}s names splitting on delimiter : #{split_on}"
       
       image_cache = DataShift::ImageLoading::get_files(@image_path, options)
       
@@ -193,7 +201,7 @@ module Datashift
         base_name = File.basename(image_name, '.*')
         base_name.strip!
                        
-        logger.info "Processing image file #{base_name} : #{File.exists?(image_name)}"
+        logger.info "Processing #{model_name} file #{base_name} : #{File.exists?(image_name)}"
            
         record = nil
                    
@@ -212,7 +220,9 @@ module Datashift
           x
         end unless(record)
           
-        record = record.product if(record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
+        # for digitals we want to attach to the variant, not the master.  
+		# for images we want to attach to the master
+        record = record.product if((model_name=='Image') && record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
       
         if(record)
           logger.info "Found record for attachment : #{record.inspect}"
@@ -224,7 +234,7 @@ module Datashift
             exists = record.images.detect {|i| puts "Check #{paper_clip_name} matches #{i.attachment_file_name}"; i.attachment_file_name == paper_clip_name }
             if(exists)
               rid = record.respond_to?(:name) ? record.name : record.id
-              puts "Skipping Image #{image_name} already loaded for #{rid}"
+              puts "Skipping #{model_name} #{image_name} already loaded for #{rid}"
               logger.info "Skipping - Image #{image_name} already loaded for #{attachment_klazz}"
               next 
             end
@@ -239,9 +249,9 @@ module Datashift
         if(record || (record.nil? && options[:process_when_no_assoc]))
           image_loader.reset()
           
-          logger.info("Adding Image #{image_name} to Product #{record.name}")
-          image_loader.create_image(image_klazz, image_name, record)
-          puts "Added Image #{File.basename(image_name)} to Product #{record.sku} : #{record.name}" if(@verbose)
+          logger.info("Adding Image #{model_name} to Product #{record.name}")
+          image_loader.create_image(image_klazz, image_name, record, options)
+          puts "Added #{model_name} #{File.basename(image_name)} to Product #{record.sku} : #{record.name}, ID:#{record.id}" if(@verbose)
         end
 
       end
@@ -250,13 +260,13 @@ module Datashift
         FileUtils.mkdir_p('MissingRecords') unless File.directory?('MissingRecords')
         
         puts "WARNING : #{missing_records.size} of #{image_cache.size} images could not be attached to a Product"
-        puts 'Copying all images with MISSING Records to ./MissingRecords >>'
+        puts 'Copying all #{model_name}s with MISSING Records to ./MissingRecords >>'
         missing_records.each do |i|
           puts "Copy #{i} to MissingRecords folder"
           FileUtils.cp( i, 'MissingRecords')  unless(options[:dummy] == 'true')
         end
       else
-        puts "All images (#{image_cache.size}) were succesfully attached to a Product"
+        puts "All #{model_name}s (#{image_cache.size}) were succesfully attached to a Product"
       end
 
       puts "Dummy Run Complete- if happy run without -d" if(options[:dummy])
@@ -370,7 +380,7 @@ module Datashift
           x
         end unless(record)
           
-        # for digitals we want to attach to the variant, not the master.  uncomment this to attach to master
+        # for digitals we want to attach to the variant, not the master.  
 		# for images we want to attach to the master
         record = record.product if((model_name=='Image') && record && record.respond_to?(:product))  # SKU stored on Variant but we want it's master Product
 		
@@ -410,7 +420,7 @@ module Datashift
         FileUtils.mkdir_p('MissingRecords') unless File.directory?('MissingRecords')
         
         puts "WARNING : #{missing_records.size} of #{digital_cache.size} digitals could not be attached to a Product"
-        puts 'Copying all digitals with MISSING Records to ./MissingRecords >>'
+        puts 'Copying all #{model_name}s with MISSING Records to ./MissingRecords >>'
         missing_records.each do |i|
           puts "Copy #{i} to MissingRecords folder"
           FileUtils.cp( i, 'MissingRecords')  unless(options[:dummy] == 'true')

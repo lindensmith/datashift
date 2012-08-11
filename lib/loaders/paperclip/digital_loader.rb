@@ -51,7 +51,9 @@ module DataShift
           )  
 
           # Attach to product ID for images, to variant for other digitals
-          digital.variant_id = viewable_record.id unless (options(:model_name)=='Image')
+          unless (options[:model_name]=='Image')
+            digital.variant_id = viewable_record.id
+          end
           puts digital.save ? "Success: Created Digital: #{digital.id} : #{digital.attachment_file_name} : #{digital.variant_id}" : "ERROR : Problem saving to DB Digital: #{digital.inspect}"
         rescue => e
           puts "PaperClip error - Problem creating a Digital from : #{attachment_path}"

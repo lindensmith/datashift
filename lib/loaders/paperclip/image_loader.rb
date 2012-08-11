@@ -14,7 +14,8 @@ module DataShift
     include DataShift::Logging
     
     def self.get_files(path, options = {})
-      glob = (options['recursive'] || options[:recursive])  ? "**/*.{jpg,jpeg,png,gif}" : "*.{jpg,jpeg,png,gif}"
+      #file type list should probably be a settable option
+      glob = (options['recursive'] || options[:recursive])  ? "**/*.{jpg,jpeg,png,gif,mobi,epub,pdf}" : "*.{jpg,jpeg,png,gif,mobi,epub,pdf}"
       puts "#{glob}"
       
       Dir.glob("#{path}/#{glob}")
@@ -23,8 +24,8 @@ module DataShift
     def get_file( attachment_path )
       
       unless File.exists?(attachment_path) && File.readable?(attachment_path)
-        logger.error("Cannot process Image from #{Dir.pwd}: Invalid Path #{attachment_path}")
-        raise "Cannot process Image : Invalid Path #{attachment_path}"
+        logger.error("Cannot process items from #{Dir.pwd}: Invalid Path #{attachment_path}")
+        raise "Cannot process loader : Invalid Path #{attachment_path}"
       end
      
       file = begin
@@ -46,6 +47,8 @@ module DataShift
        
       has_attached_file = options[:has_attached_file_name] || :attachment
       
+      model_name = options[:model_name] ? options[:model_name] : 'Image'
+      
       alt = if(options[:alt])
         options[:alt]
       else
@@ -57,17 +60,24 @@ module DataShift
       file = get_file(attachment_path)
 
       begin
-        
-        image = klass.new( 
-          {has_attached_file.to_sym => file, :viewable => viewable_record, :alt => alt, :position => position},
-          :without_protection => true
-        )  
+        puts "model name #{model_name}"
+        if (model_name == 'Image')
+          image = klass.new( 
+            {has_attached_file.to_sym => file, :viewable => viewable_record, :alt => alt, :position => position},
+            :without_protection => true
+          )  
+        else
+          image = klass.new( 
+            {has_attached_file.to_sym => file},
+            :without_protection => true
+          )
+        end
         
         #image.attachment.reprocess!  not sure this is required anymore
-        
-        puts image.save ? "Success: Created Image: #{image.id} : #{image.attachment_file_name}" : "ERROR : Problem saving to DB Image: #{image.inspect}"
+        image.variant_id = viewable_record.id unless (model_name=='Image')
+        puts image.save ? "Success: Created #{model_name}: #{image.id} : #{image.attachment_file_name}" : "ERROR : Problem saving to DB Image: #{image.inspect}"
       rescue => e
-        puts "PaperClip error - Problem creating an Image from : #{attachment_path}"
+        puts "PaperClip error - Problem creating an #{model_name} from : #{attachment_path}"
         puts e.inspect, e.backtrace
       end
     end

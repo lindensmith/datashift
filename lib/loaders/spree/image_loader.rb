@@ -21,7 +21,7 @@ module DataShift
     def create_image(klass, attachment_path, viewable_record = nil, options = {})
         
       viewable =  (SpreeHelper::version.to_f > 1 && viewable_record.is_a?(Spree::Product) ) ? viewable_record.master : viewable_record
-      
+      puts "datashift::imageloading::createimage #{klass}"
       super(klass, attachment_path, viewable, options)
     end
   end
@@ -37,10 +37,12 @@ module DataShift
       include DataShift::ExcelLoading
       
       def initialize(image = nil, options = {})
-        puts "SpreeHelper::initialize starting initialze()\n"
+        puts "SpreeHelper::initialize starting initialize()\n"
         opts = options.merge(:load => false)  # Don't need operators and no table Spree::Image
-
-        super( SpreeHelper::get_spree_class('Image'), image, opts )
+        model_name = options[:model_name] ? options[:model_name] :'Image' 
+        puts "ImageLoader model name: #{model_name}"
+        
+        super( SpreeHelper::get_spree_class(model_name), image, opts )
         
         if(SpreeHelper::version.to_f > 1.0 )
           @attachment_klazz  = DataShift::SpreeHelper::get_spree_class('Variant' )
@@ -50,7 +52,7 @@ module DataShift
         
         puts "Attachment Class is #{@attachment_klazz}" if(@verbose)
           
-        raise "Failed to create Image for loading" unless @load_object
+        raise "Failed to create #{model_name} for loading" unless @load_object
       end
       
       def process()
@@ -81,7 +83,7 @@ module DataShift
             @load_object.viewable = record.product   # SKU stored on Variant but we want it's master Product
           end
           @load_object.save
-          puts "Image viewable set : #{record.inspect}"
+          puts "Image/Digital viewable set : #{record.inspect}"
           
         else
           puts "WARNING - Cannot set viewable - No matching record supplied"
