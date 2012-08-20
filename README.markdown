@@ -51,7 +51,6 @@ To pull the tasks in, add this call to your Rakefile :
 To keep the availability to only development mode use
 
 ```ruby DataShift::load_tasks if(Rails.env.development?)```
->>>>>>> a6d5d492fd9df38a4acb8c50423219994b4b5601
 
 Using the Thor command line applications is preferred over rake, and the rake commands are gradually being converted. To use the Thor command line applications, create a high level '.thor' file - e.g 'mysite.thor' - in your applications root directory 
 
@@ -142,7 +141,7 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
 
   The required POI jars are already included.
 
-- *Direct Excel export*
+- *Direct Excel export* (requires jRuby)
 
   Excel/OpenOffice spreadsheets are heavily used in many sectors, so direct support makes it
   easier and quicker to migrate your client's data into a Rails/ActiveRecord project.
@@ -160,7 +159,7 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
 
 - *Associations*
 
-  Can handle 'belongs_to, 'has_many' and 'has_one' associations, including assignment of multiple objects
+  Can handle 'belongs\_to, 'has\_many' and 'has_one' associations, including assignment of multiple objects
   via either multiple columns, or via specially delimited entry in a single (column). See Details section.
 
   Supports delegated attributes.
@@ -215,8 +214,18 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
   to load digitals and digital samples use  
 
   bundle exec thor datashift:spree:images -i db/digitaldirectory/ -m Digital
+	 where 'Digital' is the name of the model.
   
-  where 'Digital' is the name of the model. 
+- Additional options for Image and Digital Product loading:
+  "-s" to try to attach files to products based on sku. The SKU should be part of the filename
+  "-r" for recursive search if the files to be loaded and attached are in multiple subdirectories
+  "-g {epub,mobi,pdf}" to set the filetypes to load (based on ending, doesn't look in)
+  "--split\_file\_name\_on=' '" to change the delimiter for finding the sku (default is underscore, the example is a space.) Note that Datashift does not attempt to find the sku combinatorically, so if the filename is "PROD\_001\_Prodname", and you're splitting on "\_", it will not match a SKU of "PROD\_001" (it will try to match PROD and 001) unless you also specify a prefix option (below)
+  "-p PROD" to specify a prefix to add to file name components before attempting to match.  The example will prepend "PROD" before attempting to match.
+  Additional options can be found by entering "bundle exec thor help datashift:spree:images"
+
+  
+  
 
 ## Import to Active Record
 

@@ -116,6 +116,7 @@ module Datashift
     method_option :case_sensitive, :type => :boolean, :desc => "Use case sensitive where clause to find Product"
     method_option :use_like, :type => :boolean, :desc => "Use sku/name LIKE 'string%' instead of sku/name = 'string' in where clauses to find Product"
 	method_option :model_name, :aliases => '-m', :type => :string, :desc => "Model name to load to. Default is 'Digital'"
+	method_option :glob, :aliases => '-g', :type=>:string, :desc=>"list of file endings to load"
     def images()
 
       require File.expand_path('config/environment.rb')
