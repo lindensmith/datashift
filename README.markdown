@@ -219,7 +219,7 @@ This data can be exported directly to Excel/OpenOffice spreadsheets.
 - Additional options for Image and Digital Product loading:
   "-s" to try to attach files to products based on sku. The SKU should be part of the filename
   "-r" for recursive search if the files to be loaded and attached are in multiple subdirectories
-  "-g {epub,mobi,pdf}" to set the filetypes to load (based on ending, doesn't look in)
+  "-g '{epub,mobi,pdf}'" to set the filetypes to load (based on ending, doesn't look in)
   "--split\_file\_name\_on=' '" to change the delimiter for finding the sku (default is underscore, the example is a space.) Note that Datashift does not attempt to find the sku combinatorically, so if the filename is "PROD\_001\_Prodname", and you're splitting on "\_", it will not match a SKU of "PROD\_001" (it will try to match PROD and 001) unless you also specify a prefix option (below)
   "-p PROD" to specify a prefix to add to file name components before attempting to match.  The example will prepend "PROD" before attempting to match.
   Additional options can be found by entering "bundle exec thor help datashift:spree:images"
